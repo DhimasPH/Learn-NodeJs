@@ -18,8 +18,17 @@ app.use(bodyParser.json())
 mongoose.connect(config.database, { useNewUrlParser: true , useUnifiedTopology: true });
 app.set('secretKey',config.secret);
 
-// API
-router.post('/login',function(req,res){
+// Routes
+const users = require('./app/routes/users');
+
+// set route
+app.get('/', function(req,res){
+    res.send('ini di route home');
+});
+
+
+// API GLOBAL
+app.post('/login',function(req,res){
     var username = req.body.email;
     var pass = req.body.password;
     User.findOne({
@@ -50,14 +59,8 @@ router.post('/login',function(req,res){
     )
 })
 
-
-// set route
-router.get('/', function(req,res){
-    res.send('ini di route home');
-});
-
 //proteksi route dengan token
-router.use(function(req,res,next){
+app.use(function(req,res,next){
     //mengambil token
     var token  = req.headers['authorization'];
 
@@ -90,18 +93,12 @@ router.use(function(req,res,next){
 
 })
 
-router.get('/users',function(req,res){
-    User.find({}, function(err,users){
-        res.json(users);
-    });
+app.get('/profile',function(req,res){
+    res.json(req.decoded);
 });
 
-router.get('/profile',function(req,res){
-    res.json(req.decoded);
-})
-
 //prefix api
-app.use('/api',router);
+app.use('/api/users/',users);
 
 
 app.listen(port);
