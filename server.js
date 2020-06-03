@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const app = express();
 const router = express.Router();
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(10);
 
 //set up local
 const config = require('./app/config');
@@ -39,9 +41,7 @@ app.post('/login',function(req,res){
         if(!user){
             res.json({'success' : false , 'message' : 'User not found'})
         }else{
-            if(user.password != pass){
-                res.json({'success' : false , 'message' : 'Wrong password'})                
-            }else{
+            if(bcrypt.compareSync(pass,user.password)){
                 //mebuat token
                 var token = jwt.sign(user.toJSON(),app.get('secretKey'),{
                     expiresIn : '24h'
@@ -53,6 +53,8 @@ app.post('/login',function(req,res){
                     message : 'token berhasil di dapatkan',
                     token : token
                 })
+            }else{
+                res.json({'success' : false , 'message' : 'Wrong password '})                
             }
         }
     }

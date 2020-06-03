@@ -1,7 +1,11 @@
+const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const config = require('../config');
 const User = require('../models/user');
 mongoose.connect(config.database, { useNewUrlParser: true , useUnifiedTopology: true });
+
+const salt = bcrypt.genSaltSync(10);
+
 
 class UsersController {
 
@@ -12,12 +16,12 @@ class UsersController {
         if(email && password){
             const Newdata = {
                 email :email,
-                password : password
+                password : bcrypt.hashSync(password,salt)
             }
 
             // email checking
             User.find({email : email },function(err,data){
-                if(err){
+                if(err || data.length === 0){
                     // input to db
                     User.create(Newdata, function(err,users){
                         if(err){
@@ -26,7 +30,7 @@ class UsersController {
                                 message : 'Failed create account'
                             })
                         }else{
-                            res.status(200).json({
+                            res.status(201).json({
                                 status : 'success',
                                 message : 'User has been created'
                             })
@@ -50,7 +54,7 @@ class UsersController {
 
     static getAllUser(req,res){
         User.find({}, function(err,users){
-            if(err){
+            if(err || users.length === 0){
                 res.status(404).json({
                     status : 'failed',
                     message : 'Data not found'
@@ -68,7 +72,7 @@ class UsersController {
         const userId = req.query.id;
         if(userId){
             User.find({_id : userId },function(err,users){
-                if(err){
+                if(err || users.length === 0){
                     res.status(404).json({
                         status : 'failed',
                         message : 'Data with id : '+userId+' not found'
@@ -92,8 +96,8 @@ class UsersController {
         const userId = req.params.id;
         if(userId){
             User.find({_id : userId },function(err,users){
-                if(err){
-                    res.status(404).json({
+                if(err || users.length === 0){
+                    res.status(500).json({
                         status : 'failed',
                         message : 'Update failed, data with id : '+userId+' not found'
                     })
@@ -103,9 +107,9 @@ class UsersController {
                     if(email && password){
                         const UpdateData = {
                             email :email,
-                            password : password
+                            password : bcrypt.hashSync(password,salt)
                         }
-                        User.update({_id : userId},UpdateData,function(err,users){
+                        User.updateOne({_id : userId},UpdateData,function(err,users){
                             if(err){
                                 res.status(500).json({
                                     status : 'failed',
@@ -124,6 +128,30 @@ class UsersController {
                             message : 'Param not found'
                         })
                     }
+                }
+            })
+        }else{
+            res.status(400).json({
+                status : 'failed',
+                message : 'Param not found'
+            })
+        }
+    }
+
+    static deleteUsers(req,res){
+        const userId = req.params.id;
+        if(userId){
+            User.findByIdAndDelete({_id:userId},function(err,response){
+                if(err){
+                    res.status(500).json({
+                        status : 'failed',
+                        message : 'Delete failed'
+                    })
+                }else{
+                    res.status(200).json({
+                        status : 'success',
+                        message : 'Data with id : '+userId+' has been deleted'
+                    })
                 }
             })
         }else{
