@@ -25,7 +25,7 @@ const users = require('./app/routes/users');
 
 // set route
 app.get('/', function(req,res){
-    res.send('ini di route home');
+    res.sendFile('doc/test.html', {root: __dirname })
 });
 
 
